@@ -2,7 +2,6 @@ package com.example.presentation;
 
 import com.example.domain.User;
 import com.example.dto.TokenSetDto;
-import com.example.jwt.JwtService;
 import com.example.jwt.JwtUtil;
 import com.example.request.JoinRequest;
 import com.example.request.LoginRequest;
@@ -32,7 +31,7 @@ public class UserController {
     private final UserService userService;
     private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
-    private final JwtService jwtService;
+
 
     @GetMapping("/auth/me")
     public ResponseEntity<String> getCurrentUser(@AuthenticationPrincipal PrincipalDetails principalDetails) {
@@ -68,28 +67,14 @@ public class UserController {
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        return ResponseEntity.ok("Login successfully"); // email로 찾은 user로 UserInfoDto를 생성하여 createToken 호출
-    }
-
-    @PostMapping("/reissue")
-    public ResponseEntity<String> reissue(@CookieValue(name = "refreshToken") String refreshToken,
-                                     HttpServletResponse response) throws IllegalAccessException {
-        TokenSetDto tokenSetDto=jwtService.reissue(refreshToken);
-
-        ResponseCookie accessCookie=jwtUtil.createAccessTokenCookie(tokenSetDto.getAccessToken());
-        ResponseCookie refreshCookie= jwtUtil.createRefreshTokenCookie(tokenSetDto.getRefreshToken());
-
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-
-        return ResponseEntity.ok("Reissue successfully");
+        return ResponseEntity.ok("Login successfully");
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@CookieValue(name = "accessToken") String accessToken,
                                     HttpServletResponse response) throws IllegalAccessException {
         ResponseCookie accessCookie=userService.logout(accessToken);
-        ResponseCookie refreshCookie=jwtUtil.expireRefreshTokenCookie(); // TODO: Refresh Token DB에서 삭제 로직 필요
+        ResponseCookie refreshCookie=jwtUtil.expireRefreshTokenCookie();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
