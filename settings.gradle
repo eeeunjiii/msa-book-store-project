@@ -1,0 +1,12 @@
+rootProject.name = 'msa-project'
+
+include 'eureka-server'
+include 'common'
+include 'api-gateway'
+include 'user-service'
+include 'config-server'
+include 'item-service'
+include 'cart-service'
+include 'order-service'
+include 'frontend'
+
