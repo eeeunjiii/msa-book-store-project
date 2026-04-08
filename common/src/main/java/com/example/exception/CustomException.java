@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Getter
 @RequiredArgsConstructor
-public class CustomException extends RuntimeException{
+public class CustomException extends RuntimeException {
     private final ErrorCode errorCode;
     private final LocalDateTime timeStamp;
     private final Map<String, Object> details=new HashMap<>();
@@ -24,5 +24,9 @@ public class CustomException extends RuntimeException{
         this.errorCode=errorCode;
         this.timeStamp=LocalDateTime.now();
         this.details.putAll(details);
+    }
+
+    public String getMessage() {
+        return errorCode.getMessage();
     }
 }
