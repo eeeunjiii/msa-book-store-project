@@ -5,7 +5,7 @@ import com.example.domain.User;
 import com.example.dto.TokenSetDto;
 import com.example.dto.UserInfoDto;
 import com.example.exception.PasswordIncorrectException;
-import com.example.exception.UnauthorizedAccessTokenException;
+import com.example.exception.JwtInvalidException;
 import com.example.exception.UserExistedException;
 import com.example.exception.UserNotFoundException;
 import com.example.jwt.JwtUtil;
@@ -16,7 +16,7 @@ import com.example.request.JoinRequest;
 import com.example.request.LoginRequest;
 import com.example.response.UserResponse;
 import com.example.util.UserMapper;
-import java.util.List;
+
 import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
@@ -66,17 +66,12 @@ public class UserService {
                 });
     }
 
-    public boolean checkDuplicatedUserName(String name) {
-        return userRepository.existsByName(name);
-    }
-
     @Transactional
     public TokenSetDto login(LoginRequest req) {
         String email=req.getEmail();
         String password=req.getPassword();
 
-        User user=userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException(ErrorCode.USER_NOT_FOUND));
+        User user=findUserByEmail(email);
 
         if(!encoder.matches(password, user.getPassword())) {
             throw new PasswordIncorrectException(ErrorCode.EMAIL_PASSWORD_INCORRECT);
@@ -86,9 +81,9 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseCookie logout(String accessToken) throws IllegalAccessException{
+    public ResponseCookie logout(String accessToken) {
         if (!jwtUtil.validateToken(accessToken)) {
-            throw new UnauthorizedAccessTokenException(UNAUTHORIZED_ACCESS_TOKEN);
+            throw new JwtInvalidException(UNAUTHORIZED_ACCESS_TOKEN);
         }
 
         String email=jwtUtil.getEmail(accessToken);
@@ -101,15 +96,6 @@ public class UserService {
                 .maxAge(0)
                 .path("/")
                 .build();
-    }
-
-    public List<User> findUserList(){
-        return userRepository.findAll();
-    }
-
-    public UserInfoDto getUserInfoDtoByEmail(String email) {
-        User user=findUserByEmail(email);
-        return userMapper.toDto(user);
     }
 
     public User findUserByEmail(String email){

@@ -6,6 +6,7 @@ import com.example.jwt.JwtUtil;
 import com.example.request.JoinRequest;
 import com.example.request.LoginRequest;
 import com.example.request.UserRequest;
+import com.example.response.ApiResponse;
 import com.example.response.UserResponse;
 import com.example.security.PrincipalDetails;
 import com.example.application.UserService;
@@ -14,7 +15,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.core.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,32 +34,28 @@ public class UserController {
 
 
     @GetMapping("/auth/me")
-    public ResponseEntity<String> getCurrentUser(@AuthenticationPrincipal PrincipalDetails principalDetails) {
-        if (principalDetails==null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
-        }
-
-        return ResponseEntity.ok(principalDetails.getUsername());
+    public ResponseEntity<ApiResponse<String>> getCurrentUser(@AuthenticationPrincipal PrincipalDetails principalDetails) {
+        return ResponseEntity.ok(ApiResponse.success(principalDetails.getUsername(), "사용자 조회 성공"));
     }
 
     @PostMapping("/user")
-    public ResponseEntity<UserResponse> getUser(@RequestBody UserRequest userRequest) { // Order Service에서 사용자 정보 얻어올 때 사용하는 API
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(@RequestBody UserRequest userRequest) { // Order Service에서 사용자 정보 얻어올 때 사용하는 API
         User user=userService.findUserByEmail(userRequest.getEmail());
         UserResponse userResponse=userMapper.toUserResponse(user);
 
-        return ResponseEntity.ok(userResponse);
+        return ResponseEntity.ok(ApiResponse.success(userResponse, "사용자 조회 성공"));
     }
 
     @PostMapping("/join")
-    public ResponseEntity<UserResponse> join(@RequestBody JoinRequest joinRequest) {
+    public ResponseEntity<ApiResponse<UserResponse>> join(@RequestBody JoinRequest joinRequest) {
         UserResponse userResponse=userService.join(joinRequest);
 
-        return ResponseEntity.ok(userResponse);
+        return ResponseEntity.ok(ApiResponse.created(userResponse));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-        TokenSetDto tokenSetDto =userService.login(loginRequest);
+    public ResponseEntity<ApiResponse<String>> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
+        TokenSetDto tokenSetDto=userService.login(loginRequest);
 
         ResponseCookie accessCookie=jwtUtil.createAccessTokenCookie(tokenSetDto.getAccessToken());
         ResponseCookie refreshCookie=jwtUtil.createRefreshTokenCookie(tokenSetDto.getRefreshToken());
@@ -67,11 +63,11 @@ public class UserController {
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        return ResponseEntity.ok("Login successfully");
+        return ResponseEntity.ok(ApiResponse.success(tokenSetDto.getEmail(), "로그인 성공"));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@CookieValue(name = "accessToken") String accessToken,
+    public ResponseEntity<ApiResponse<String>> logout(@CookieValue(name = "accessToken") String accessToken,
                                     HttpServletResponse response) throws IllegalAccessException {
         ResponseCookie accessCookie=userService.logout(accessToken);
         ResponseCookie refreshCookie=jwtUtil.expireRefreshTokenCookie();
@@ -79,14 +75,14 @@ public class UserController {
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        return ResponseEntity.ok("Logout Successfully");
+        return ResponseEntity.ok(ApiResponse.success("로그아웃 성공"));
     }
 
     @GetMapping("/{userId}/my-page")
-    public ResponseEntity<UserResponse> myPage(@PathVariable("userId") Long userId) {
+    public ResponseEntity<ApiResponse<UserResponse>> myPage(@PathVariable("userId") Long userId) {
         User user=userService.findUserById(userId);
         UserResponse userResponse=userMapper.toUserResponse(user);
 
-        return ResponseEntity.ok(userResponse);
+        return ResponseEntity.ok(ApiResponse.success(userResponse));
     }
 }
