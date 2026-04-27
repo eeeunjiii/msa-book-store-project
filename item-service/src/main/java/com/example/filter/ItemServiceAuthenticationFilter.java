@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.util.List;
 
 @Component
+@Slf4j
 public class ItemServiceAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
@@ -25,6 +27,8 @@ public class ItemServiceAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String email=request.getHeader("X-User-Email");
         String role=request.getHeader("X-User-Role");
+
+        log.info("email : {} | role: {}", email, role);
 
         if (StringUtils.hasText(email) && StringUtils.hasText(role)) {
             UserDetails userDetails=new User(email, "", List.of(new SimpleGrantedAuthority(role)));

@@ -1,8 +1,6 @@
 package com.example.presentation;
 
-import com.example.adapter.UserClient;
 import com.example.constant.Payment;
-import com.example.domain.OrderItem;
 import com.example.request.CreateOrderItemRequest;
 import com.example.request.OrderInfoRequest;
 import com.example.response.*;
@@ -18,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
     private final OrderService orderService;
     private final OrderItemService orderItemService;
-    private final UserClient userClient;
 
     @ModelAttribute("payments")
     public Payment[] payments() {
@@ -37,35 +33,28 @@ public class OrderController {
 
     /** Item에서 바로 주문하기로 주문한 경우 **/
     @PostMapping("/items/order")
-    public ResponseEntity<CompleteOrderResponse> createOrderFromItem(
+    public ResponseEntity<ApiResponse<CompleteOrderResponse>> createOrderFromItem(
             @AuthenticationPrincipal(expression = "username") String email,
             @RequestBody OrderInfoRequest orderInfoRequest,
             @RequestParam("quantity") int quantity,
             @RequestParam("itemId") Long itemId) {
-        log.info("OrderController | email: {}", email);
-        UserResponse userResponse=userClient.sendUserResponse(email);
+        CompleteOrderResponse response=orderService.createOrder(email, itemId, quantity, orderInfoRequest);
 
-        log.info("email: {} | phoneNumber: {}", userResponse.getEmail(), userResponse.getPhoneNum());
-
-        CompleteOrderResponse completeOrderResponse=
-                orderService.createOrder(userResponse.getId(), itemId, quantity, orderInfoRequest);
-
-        return ResponseEntity.ok(completeOrderResponse);
+        return ResponseEntity.ok(ApiResponse.success(response, "도서 바로 주문하기 완료"));
     }
 
     /** 카트에서 주문하는 경우 **/
     @GetMapping("/items/cart/order")
-    public ResponseEntity<Integer> orderFormFromCart(HttpSession session,
-                                                     @RequestBody OrderInfoRequest orderInfoRequest) { // 아직 OrderItem으로 저장하기 전 -> dto로 미리 주문 내역 출력
-        List<CreateOrderItemRequest> orderItemDtoList=(List<CreateOrderItemRequest>) session.getAttribute("orderItems");
+    public ResponseEntity<ApiResponse<Integer>> orderFormFromCart(HttpSession session) { // 아직 OrderItem으로 저장하기 전 -> 미리 주문 내역 출력
+        List<CreateOrderItemRequest> orderItemRequests=(List<CreateOrderItemRequest>) session.getAttribute("orderItems");
 
-        int totalPrice=orderService.getTotalPrice(orderItemDtoList);
+        int totalPrice=orderService.getTotalPrice(orderItemRequests);
 
-        return ResponseEntity.ok(totalPrice);
+        return ResponseEntity.ok(ApiResponse.success(totalPrice));
     }
 
     @PostMapping("/items/cart/order")
-    public ResponseEntity<CompleteOrderResponse> createOrderFromCart( // 실제 주문이 완료되는 곳
+    public ResponseEntity<ApiResponse<CompleteOrderResponse>> createOrderFromCart( // 실제 주문이 완료되는 곳
             @AuthenticationPrincipal(expression = "username") String email,
             @RequestBody OrderInfoRequest orderInfoRequest,
             HttpServletRequest request) {
@@ -73,32 +62,28 @@ public class OrderController {
         List<CreateOrderItemRequest> orderItemRequests=
                 (List<CreateOrderItemRequest>) session.getAttribute("orderItems");
 
-        CompleteOrderResponse completeOrderResponse
-                =orderService.createOrder(email, orderItemRequests, orderInfoRequest);
+        CompleteOrderResponse response=orderService.createOrder(email, orderItemRequests, orderInfoRequest);
 
-        return ResponseEntity.ok(completeOrderResponse);
+        return ResponseEntity.ok(ApiResponse.success(response, "장바구니 주문하기 완료"));
     }
 
     @GetMapping("/{userId}/order")
-    public ResponseEntity<List<CompleteOrderResponse>> orderListForm(
+    public ResponseEntity<ApiResponse<List<CompleteOrderResponse>>> orderListForm(
             @AuthenticationPrincipal(expression = "username") String email) {
-        List<CompleteOrderResponse> completeOrderResponses=
-                orderService.findOrderListByUser(email);
+        List<CompleteOrderResponse> responses=orderService.findOrderListByUser(email);
 
-        return ResponseEntity.ok(completeOrderResponses);
+        return ResponseEntity.ok(ApiResponse.success(responses, "주문 목록 조회 완료"));
     }
 
     @GetMapping("/{userId}/order/{orderId}")
-    public String orderDetailsForm(Model model, @PathVariable("orderId") Long orderId) {
-        List<OrderItem> orderItems=orderItemService.findListByOrderId(orderId);
+    public ResponseEntity<ApiResponse<List<CompleteOrderItemResponse>>> orderDetailsForm(@PathVariable("orderId") Long orderId) {
+        List<CompleteOrderItemResponse> responses=orderItemService.findOrderItemList(orderId);
 
-        model.addAttribute("orderItems", orderItems);
-
-        return "/user/orderItemForm";
+        return ResponseEntity.ok(ApiResponse.success(responses, "상세 주문 내역 조회 완료"));
     }
 
     @PostMapping("/items/add/order")
-    public ResponseEntity<String> addToOrder(HttpServletRequest request,
+    public ResponseEntity<ApiResponse<String>> addToOrder(HttpServletRequest request,
                                              @RequestBody OrderItemRequest orderItemRequest) {
         HttpSession session=request.getSession();
         List<OrderItemRequest> orderItemRequestList=(List<OrderItemRequest>) session.getAttribute("orderItems");
@@ -112,11 +97,11 @@ public class OrderController {
         }
 
         session.setAttribute("orderItems", orderItemRequestList);
-        return ResponseEntity.ok("Success add to order");
+        return ResponseEntity.ok(ApiResponse.success("선택 도서 주문 추가 완료"));
     }
 
     @PostMapping("/items/delete/order")
-    public ResponseEntity<String> deleteFromOrder(HttpServletRequest request,
+    public ResponseEntity<ApiResponse<String>> deleteFromOrder(HttpServletRequest request,
                                                   @RequestBody OrderItemRequest orderItemRequest) {
         HttpSession session=request.getSession();
         List<OrderItemRequest> orderItemDtoList=(List<OrderItemRequest>) session.getAttribute("orderItems");
@@ -126,6 +111,6 @@ public class OrderController {
             session.setAttribute("orderItems", orderItemDtoList);
         }
 
-        return ResponseEntity.ok("Success remove from order");
+        return ResponseEntity.ok(ApiResponse.success("선택 도서 주문 제거 완료"));
     }
 }

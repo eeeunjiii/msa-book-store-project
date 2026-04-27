@@ -17,6 +17,7 @@ public class CompleteOrderResponse {
     private List<CompleteOrderItemResponse> orderItems;
 
     private DeliveryInfo deliveryInfo;
+    private int totalPrice;
 
     public CompleteOrderResponse(Long orderId, LocalDateTime orderDate, DeliveryInfo deliveryInfo) {
         this.orderId=orderId;
@@ -26,8 +27,8 @@ public class CompleteOrderResponse {
 
     static public CompleteOrderResponse of(Long orderId, LocalDateTime orderDate,
                                            List<CompleteOrderItemResponse> orderItems,
-                                           DeliveryInfo deliveryInfo) {
-        return new CompleteOrderResponse(orderId, orderDate, orderItems, deliveryInfo);
+                                           DeliveryInfo deliveryInfo, int totalPrice) {
+        return new CompleteOrderResponse(orderId, orderDate, orderItems, deliveryInfo, totalPrice);
     }
 
     static public CompleteOrderResponse of(Long orderId, LocalDateTime orderDate, DeliveryInfo deliveryInfo) {

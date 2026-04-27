@@ -4,6 +4,7 @@ import com.example.domain.Item;
 import com.example.application.ItemService;
 import com.example.request.NewItemRequest;
 import com.example.request.UpdateItemRequest;
+import com.example.response.ApiResponse;
 import com.example.response.ItemResponse;
 import com.example.util.ItemMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,42 +28,41 @@ public class ItemController {
 
     @GetMapping("/")
     @ResponseBody
-    public ResponseEntity<Page<ItemResponse>> items(@RequestParam(value = "page", defaultValue = "0") int page) {
+    public ResponseEntity<ApiResponse<Page<ItemResponse>>> items(@RequestParam(value = "page", defaultValue = "0") int page) {
         Page<ItemResponse> response=itemService.findAll(page);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(response, "도서 목록 조회 성공"));
     }
 
     @GetMapping("/{itemId}")
-    public ResponseEntity<ItemResponse> getItem(@PathVariable("itemId") Long itemId) {
-        log.info("Item Controller 도달");
+    public ResponseEntity<ApiResponse<ItemResponse>> getItem(@PathVariable("itemId") Long itemId) {
         Item item=itemService.findById(itemId);
-        ItemResponse itemResponse=itemMapper.mapToItemResponse(item);
+        ItemResponse response=itemMapper.mapToItemResponse(item);
 
-        return ResponseEntity.ok(itemResponse);
+        return ResponseEntity.ok(ApiResponse.success(response, "도서 조회 성공"));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<ItemResponse>> search(
+    public ResponseEntity<ApiResponse<Page<ItemResponse>>> search(
             @RequestParam(value = "category", defaultValue = "title") String category,
             @RequestParam(value = "keyword", defaultValue = "") String keyword,
             @PageableDefault(sort = "id", size= 10, direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<ItemResponse> searchList=itemService.search(category, keyword, pageable);
+        Page<ItemResponse> responses=itemService.search(category, keyword, pageable);
 
-        return ResponseEntity.ok(searchList);
+        return ResponseEntity.ok(ApiResponse.success(responses, "도서 검색 성공"));
     }
 
     @PostMapping("/manager/new")
-    public ResponseEntity<ItemResponse> addItem(@RequestBody NewItemRequest newItemRequest) {
-        ItemResponse itemResponse = itemService.create(itemMapper.toEntity(newItemRequest));
+    public ResponseEntity<ApiResponse<ItemResponse>> addItem(@RequestBody NewItemRequest newItemRequest) {
+        ItemResponse response=itemService.create(itemMapper.toEntity(newItemRequest));
 
-        return ResponseEntity.ok(itemResponse);
+        return ResponseEntity.ok(ApiResponse.created(response));
     }
 
     @PostMapping("/manager/edit/{itemId}")
-    public ResponseEntity<String> editItem(@Validated @ModelAttribute("item") UpdateItemRequest updateItemRequest,
+    public ResponseEntity<ApiResponse<String>> editItem(@Validated @ModelAttribute("item") UpdateItemRequest updateItemRequest,
                            @PathVariable("itemId") Long itemId) {
         itemService.updateItemInfo(itemId, updateItemRequest);
-        return ResponseEntity.ok("Succeed in updating Item Info");
+        return ResponseEntity.ok(ApiResponse.success("Success to editing item"));
     }
 }

@@ -25,14 +25,13 @@ public class OrderMapper {
                 order.getDeliveryStatus());
     }
 
-    //  List<CompleteOrderItemResponse> orderItemResponses=orderMapper.toOrderItemResponseList(itemResponses, orderItems, order);
-
     public CompleteOrderResponse toOrderResponse(Order order, List<CompleteOrderItemResponse> orderItems) {
         return CompleteOrderResponse.of(
                 order.getId(),
                 order.getOrderDate(),
                 orderItems,
-                toDeliveryInfo(order));
+                toDeliveryInfo(order),
+                order.getTotalPrice());
     }
 
     public CompleteOrderResponse toOrderResponse(Order order, DeliveryInfo deliveryInfo) {
@@ -42,7 +41,7 @@ public class OrderMapper {
                 deliveryInfo);
     }
 
-    public List<CompleteOrderResponse> toOrderResponses(List<Order> orders) {
+    public List<CompleteOrderResponse> toOrderResponseList(List<Order> orders) {
         return orders.stream()
                 .map(order -> {
                     DeliveryInfo deliveryInfo=toDeliveryInfo(order);
@@ -52,18 +51,16 @@ public class OrderMapper {
 
 
     // OrderItem
-    public CompleteOrderItemResponse toOrderItemResponse(ItemResponse item, OrderItem orderItem, Order order) {
+    public CompleteOrderItemResponse toOrderItemResponse(ItemResponse item, OrderItem orderItem) {
         return CompleteOrderItemResponse.of(
                 item.getTitle(),
                 orderItem.getOrderCount(),
                 orderItem.getOrderPrice(),
-                order.getTotalPrice()
+                orderItem.getTotalPrice()
         );
     }
 
-    public List<CompleteOrderItemResponse> toOrderItemResponseList(List<ItemResponse> items,
-                                                                   List<OrderItem> orderItems,
-                                                                   Order order) {
+    public List<CompleteOrderItemResponse> toOrderItemResponseList(List<ItemResponse> items, List<OrderItem> orderItems) {
         Map<Long, ItemResponse> itemMap=items.stream()
                 .collect(Collectors.toMap(ItemResponse::getId, item->item));
 
@@ -71,7 +68,7 @@ public class OrderMapper {
                 .map(orderItem -> {
                     ItemResponse item=itemMap.get(orderItem.getItemId());
 
-                    return toOrderItemResponse(item, orderItem, order);
+                    return toOrderItemResponse(item, orderItem);
                 })
                 .toList();
     }

@@ -29,23 +29,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class OrderService {
     private final OrderRepository orderRepository;
+    private final OrderItemService orderItemService;
     private final ItemClient itemClient;
     private final UserClient userClient;
     private final OrderCompletedProducer producer;
     private final OrderMapper orderMapper;
 
     @Transactional
-    public void save(Order order) {
-        orderRepository.save(order);
-    }
-
-    @Transactional
-    public CompleteOrderResponse createOrder(Long userId, Long itemId,
-                                             int quantity, OrderInfoRequest infoForm) {
+    public CompleteOrderResponse createOrder(String email, Long itemId,
+                                             int quantity, OrderInfoRequest infoRequest) {
         ItemResponse itemResponse=itemClient.sendItemResponse(itemId);
+        UserResponse userResponse=userClient.sendUserResponse(email);
 
-        Order order=Order.create(userId, infoForm);
-        OrderItem orderItem=OrderItem.create(quantity, itemResponse.getId(), itemResponse.getPrice());
+        Order order=Order.create(userResponse.getId(), infoRequest);
+        OrderItem orderItem=orderItemService.createOrderItem(itemResponse, quantity);
 
         order.addOrderItem(orderItem);
 
@@ -54,7 +51,7 @@ public class OrderService {
         OrderCreatedEvent event=OrderCreatedEvent.of(itemId, quantity);
         producer.publishOrderCreateEvent(event);
 
-        CompleteOrderItemResponse orderItemResponse=orderMapper.toOrderItemResponse(itemResponse, orderItem, order);
+        CompleteOrderItemResponse orderItemResponse=orderMapper.toOrderItemResponse(itemResponse, orderItem);
 
         return orderMapper.toOrderResponse(order, List.of(orderItemResponse));
     }
@@ -85,7 +82,7 @@ public class OrderService {
         CartOrderCreatedEvent event=CartOrderCreatedEvent.create(itemIds, userResponse.getId());
         producer.publishCartOrderEvent(event);
 
-        List<CompleteOrderItemResponse> orderItemResponses=orderMapper.toOrderItemResponseList(itemResponses, orderItems, order);
+        List<CompleteOrderItemResponse> orderItemResponses=orderMapper.toOrderItemResponseList(itemResponses, orderItems);
 
         return orderMapper.toOrderResponse(order, orderItemResponses);
     }
@@ -102,7 +99,7 @@ public class OrderService {
         UserResponse userResponse=userClient.sendUserResponse(email);
         List<Order> orders=orderRepository.findListByUserId(userResponse.getId());
 
-        return orderMapper.toOrderResponses(orders);
+        return orderMapper.toOrderResponseList(orders);
     }
 
     public int getTotalPrice(List<CreateOrderItemRequest> orderItemDtoList) {

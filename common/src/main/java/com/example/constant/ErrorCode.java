@@ -20,7 +20,13 @@ public enum ErrorCode {
     // JWT
     UNAUTHORIZED_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "JWT_001", "유효하지 않은 토큰입니다."),
     UNAUTHORIZED_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "JWT_002", "유효하지 않은 토큰입니다."),
-    ALREADY_USED_TOKEN(HttpStatus.FORBIDDEN, "JWT_003", "이미 사용된 토큰입니다.");
+    ALREADY_USED_TOKEN(HttpStatus.FORBIDDEN, "JWT_003", "이미 사용된 토큰입니다."),
+
+    // Order
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER_001", "주문을 찾을 수 없습니다."),
+
+    // Item
+    ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "ITEM_001", "도서를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;
