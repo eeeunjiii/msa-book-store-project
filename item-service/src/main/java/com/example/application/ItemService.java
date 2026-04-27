@@ -1,10 +1,11 @@
 package com.example.application;
 
+import com.example.constant.ErrorCode;
 import com.example.domain.Item;
 import com.example.event.OrderCreatedEvent;
+import com.example.exception.ItemNotFoundException;
 import com.example.repository.ItemRepository;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import com.example.request.UpdateItemRequest;
 import com.example.response.ItemResponse;
@@ -42,24 +43,25 @@ public class ItemService {
 
     @Transactional
     public void updateItemInfo(Long itemId, UpdateItemRequest updateItemRequest) { // ADMIN
-        Item item=itemRepository.findById(itemId)
-                .orElseThrow(NoSuchElementException::new);
+        Item item=findById(itemId);
 
-        item.updateItem(updateItemRequest.getTitle(), updateItemRequest.getAuthor(),
-                updateItemRequest.getPrice(), updateItemRequest.getStock());
+        if (item!=null) {
+            item.updateItem(updateItemRequest.getTitle(), updateItemRequest.getAuthor(),
+                    updateItemRequest.getPrice(), updateItemRequest.getStock());
+        } else {
+            throw new ItemNotFoundException(ErrorCode.ITEM_NOT_FOUND);
+        }
     }
 
     public Item findById(Long itemId) {
-        return itemRepository.findById(itemId)
-                .orElse(null);
+        return itemRepository.findById(itemId).orElse(null);
     }
 
     public Page<ItemResponse> findAll(int page) {
         Pageable pageable= PageRequest.of(page, 10);
 
         Page<Item> paging=itemRepository.findAll(pageable);
-        return paging.map(item -> new ItemResponse(item.getId(), item.getTitle(), item.getAuthor(),
-                item.getPublisher(), item.getPublish_year(), item.getPrice()));
+        return paging.map(itemMapper::mapToItemResponse);
     }
 
     @KafkaListener(topics = "order-completed-topic", groupId = "item-service-group")
