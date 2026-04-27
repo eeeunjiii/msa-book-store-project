@@ -37,9 +37,9 @@ public class ItemController {
     @GetMapping("/{itemId}")
     public ResponseEntity<ApiResponse<ItemResponse>> getItem(@PathVariable("itemId") Long itemId) {
         Item item=itemService.findById(itemId);
-        ItemResponse itemResponse=itemMapper.mapToItemResponse(item);
+        ItemResponse response=itemMapper.mapToItemResponse(item);
 
-        return ResponseEntity.ok(ApiResponse.success(itemResponse, "도서 조회 성공"));
+        return ResponseEntity.ok(ApiResponse.success(response, "도서 조회 성공"));
     }
 
     @GetMapping("/search")
@@ -47,16 +47,16 @@ public class ItemController {
             @RequestParam(value = "category", defaultValue = "title") String category,
             @RequestParam(value = "keyword", defaultValue = "") String keyword,
             @PageableDefault(sort = "id", size= 10, direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<ItemResponse> searchList=itemService.search(category, keyword, pageable);
+        Page<ItemResponse> responses=itemService.search(category, keyword, pageable);
 
-        return ResponseEntity.ok(ApiResponse.success(searchList, "도서 검색 성공"));
+        return ResponseEntity.ok(ApiResponse.success(responses, "도서 검색 성공"));
     }
 
     @PostMapping("/manager/new")
     public ResponseEntity<ApiResponse<ItemResponse>> addItem(@RequestBody NewItemRequest newItemRequest) {
-        ItemResponse itemResponse = itemService.create(itemMapper.toEntity(newItemRequest));
+        ItemResponse response=itemService.create(itemMapper.toEntity(newItemRequest));
 
-        return ResponseEntity.ok(ApiResponse.created(itemResponse));
+        return ResponseEntity.ok(ApiResponse.created(response));
     }
 
     @PostMapping("/manager/edit/{itemId}")

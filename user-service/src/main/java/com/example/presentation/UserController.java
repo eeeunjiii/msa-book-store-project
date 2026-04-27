@@ -41,16 +41,16 @@ public class UserController {
     @PostMapping("/user")
     public ResponseEntity<ApiResponse<UserResponse>> getUser(@RequestBody UserRequest userRequest) { // Order Service에서 사용자 정보 얻어올 때 사용하는 API
         User user=userService.findUserByEmail(userRequest.getEmail());
-        UserResponse userResponse=userMapper.toUserResponse(user);
+        UserResponse response=userMapper.toUserResponse(user);
 
-        return ResponseEntity.ok(ApiResponse.success(userResponse, "사용자 조회 성공"));
+        return ResponseEntity.ok(ApiResponse.success(response, "사용자 조회 성공"));
     }
 
     @PostMapping("/join")
     public ResponseEntity<ApiResponse<UserResponse>> join(@RequestBody JoinRequest joinRequest) {
-        UserResponse userResponse=userService.join(joinRequest);
+        UserResponse response=userService.join(joinRequest);
 
-        return ResponseEntity.ok(ApiResponse.created(userResponse));
+        return ResponseEntity.ok(ApiResponse.created(response));
     }
 
     @PostMapping("/login")
@@ -81,8 +81,8 @@ public class UserController {
     @GetMapping("/{userId}/my-page")
     public ResponseEntity<ApiResponse<UserResponse>> myPage(@PathVariable("userId") Long userId) {
         User user=userService.findUserById(userId);
-        UserResponse userResponse=userMapper.toUserResponse(user);
+        UserResponse response=userMapper.toUserResponse(user);
 
-        return ResponseEntity.ok(ApiResponse.success(userResponse));
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

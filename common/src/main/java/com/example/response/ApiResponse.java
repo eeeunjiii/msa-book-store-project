@@ -4,8 +4,10 @@ import com.example.dto.ExceptionDto;
 import com.example.exception.CustomException;
 import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
+@Getter
 public class ApiResponse<T> {
     private final boolean success;
 
