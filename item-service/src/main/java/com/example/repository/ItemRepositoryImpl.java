@@ -27,16 +27,17 @@ public class ItemRepositoryImpl implements ItemCustomRepository {
         BooleanBuilder builder=new BooleanBuilder();
 
         if(category.equals("title")) {
-            builder.and(item.title.contains(keyword));
+            builder.and(item.title.startsWith(keyword));
         } else if(category.equals("author")) {
-            builder.and(item.author.contains(keyword));
+            builder.and(item.author.startsWith(keyword));
         } else if(category.equals("publisher")) {
-            builder.and(item.publisher.contains(keyword));
+            builder.and(item.publisher.startsWith(keyword));
         }
 
         List<Item> content=queryFactory
                 .selectFrom(item)
                 .where(builder)
+                .orderBy(item.id.asc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

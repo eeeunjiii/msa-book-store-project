@@ -1,7 +1,8 @@
 package com.example.adapter;
 
+import com.example.response.ApiResponse;
 import com.example.response.ItemResponse;
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -16,11 +17,17 @@ public class ItemClient {
     }
 
     public ItemResponse sendItemResponse(Long itemId) { // OrderController
-        return webClient.get()
+        ParameterizedTypeReference<ApiResponse<ItemResponse>> responseType=
+                new ParameterizedTypeReference<>() {
+                };
+
+        ApiResponse<ItemResponse> response=webClient.get()
                 .uri("/item-service/{itemId}", itemId)
                 .retrieve()
-                .bodyToMono(ItemResponse.class)
+                .bodyToMono(responseType)
                 .block();
+
+        return response!=null?response.getData():null;
     }
 
     public List<ItemResponse> sendItemResponses(List<Long> itemIds) {

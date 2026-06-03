@@ -5,6 +5,8 @@ import com.example.dto.ExceptionDto;
 import com.example.exception.CustomException;
 import com.example.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -21,12 +23,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value={CustomException.class})
-    public ApiResponse<?> handleCustomException(CustomException e) {
+    public ResponseEntity<ApiResponse<?>> handleCustomException(CustomException e) {
         ExceptionDto exceptionDto=ExceptionDto.of(e);
+        HttpStatusCode errorCode =e.getErrorCode().getHttpStatus();
 
         log.warn("Caught CustomException - exceptionType: {} | detail: {}", exceptionDto.getExceptionType(), exceptionDto);
 
-        return ApiResponse.fail(e);
+        return new ResponseEntity<>(ApiResponse.fail(e), errorCode);
     }
 
     @ExceptionHandler(value={Exception.class})
