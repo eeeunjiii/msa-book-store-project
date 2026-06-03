@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/jwt")
+@RequestMapping("/api/v1/users/jwt")
 public class JwtController {
 
     private final JwtService jwtService;
@@ -21,7 +21,7 @@ public class JwtController {
 
     @PostMapping("/reissue")
     public ResponseEntity<String> reissue(@CookieValue(name = "refreshToken") String refreshToken,
-                                          HttpServletResponse response) throws IllegalAccessException {
+                                          HttpServletResponse response) {
         TokenSetDto tokenSetDto=jwtService.reissue(refreshToken);
 
         ResponseCookie accessCookie=jwtUtil.createAccessTokenCookie(tokenSetDto.getAccessToken());
