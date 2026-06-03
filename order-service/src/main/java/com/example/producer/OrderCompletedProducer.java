@@ -28,5 +28,14 @@ public class OrderCompletedProducer {
                 });
     }
 
-    public void publishCartOrderEvent(CartOrderCreatedEvent event) { kafkaTemplate.send(CART_ORDER_COMPLETED_TOPIC, event); }
+    public void publishCartOrderEvent(CartOrderCreatedEvent event) {
+        kafkaTemplate.send(CART_ORDER_COMPLETED_TOPIC, event)
+                .whenComplete((result, ex) -> {
+                    if (ex==null) {
+                        log.info("Message sent successfully: {}", result.getRecordMetadata().offset());
+                    } else {
+                        log.error("Failed to send message", ex);
+                    }
+                });
+    }
 }
