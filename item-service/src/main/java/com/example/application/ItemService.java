@@ -8,14 +8,15 @@ import com.example.repository.ItemRepository;
 import java.util.List;
 
 import com.example.request.UpdateItemRequest;
+import com.example.response.ItemPageResponse;
 import com.example.response.ItemResponse;
 import com.example.util.ItemMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,9 +31,7 @@ public class ItemService {
     @Transactional
     public ItemResponse create(Item item) { // ADMIN
         Item savedItem=itemRepository.save(item);
-        ItemResponse itemResponse=itemMapper.mapToItemResponse(savedItem);
-
-        return itemResponse;
+        return itemMapper.mapToItemResponse(savedItem);
     }
 
     public boolean existsItem(Item item) {
@@ -54,18 +53,31 @@ public class ItemService {
     }
 
     public Item findById(Long itemId) {
-        return itemRepository.findById(itemId).orElse(null);
+        Item item=itemRepository.findById(itemId).orElse(null);
+
+        if (item!=null) {
+            return item;
+        } else {
+            throw new ItemNotFoundException(ErrorCode.ITEM_NOT_FOUND);
+        }
     }
 
-    public Page<ItemResponse> findAll(int page) {
+    @Cacheable(
+            cacheNames = "items",
+            key = "'page:' + #p0",
+            unless = "#result == null"
+    )
+    public ItemPageResponse findAll(int page) {
         Pageable pageable= PageRequest.of(page, 10);
 
         Page<Item> paging=itemRepository.findAll(pageable);
-        return paging.map(itemMapper::mapToItemResponse);
+        Page<ItemResponse> responsePage=paging.map(itemMapper::mapToItemResponse);
+
+        return new ItemPageResponse(responsePage);
     }
 
-    @KafkaListener(topics = "order-completed-topic", groupId = "item-service-group")
-    public synchronized void reduceItemStock(OrderCreatedEvent event) {
+    @Transactional
+    public void reduceItemStockTransactional(OrderCreatedEvent event) {
         Item item=findById(event.getItemId());
 
         int newStock;
@@ -80,8 +92,6 @@ public class ItemService {
     @Transactional
     public Page<ItemResponse> search(String category, String keyword, Pageable pageable) {
         Page<Item> items=itemRepository.search(category, keyword, pageable);
-        Page<ItemResponse> itemResponses=items.map(itemMapper::mapToItemResponse);
-
-        return itemResponses;
+        return items.map(itemMapper::mapToItemResponse);
     }
 }
