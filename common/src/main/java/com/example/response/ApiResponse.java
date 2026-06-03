@@ -5,20 +5,22 @@ import com.example.exception.CustomException;
 import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 public class ApiResponse<T> {
-    private final boolean success;
+    private boolean success;
 
     @Nullable
-    private final T data;
+    private T data;
 
     @Nullable
-    private final ExceptionDto error;
+    private ExceptionDto error;
 
     @Nullable
-    private final String message;
+    private String message;
 
     public static <T> ApiResponse<T> success(final T data, String message) {
         return new ApiResponse<>(true, data, null, message);

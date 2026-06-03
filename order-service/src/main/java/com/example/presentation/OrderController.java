@@ -34,11 +34,13 @@ public class OrderController {
     /** Item에서 바로 주문하기로 주문한 경우 **/
     @PostMapping("/items/order")
     public ResponseEntity<ApiResponse<CompleteOrderResponse>> createOrderFromItem(
-            @AuthenticationPrincipal(expression = "username") String email,
+            @RequestHeader("X-User-Email") String email,
             @RequestBody OrderInfoRequest orderInfoRequest,
             @RequestParam("quantity") int quantity,
             @RequestParam("itemId") Long itemId) {
         CompleteOrderResponse response=orderService.createOrder(email, itemId, quantity, orderInfoRequest);
+
+        log.info("User Email: {} | ", email);
 
         return ResponseEntity.ok(ApiResponse.success(response, "도서 바로 주문하기 완료"));
     }

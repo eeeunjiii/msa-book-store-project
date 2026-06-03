@@ -1,10 +1,9 @@
 package com.example.presentation;
 
 import com.example.application.ItemService;
-import com.example.response.ItemResponse;
+import com.example.response.ItemPageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,8 +19,8 @@ public class HomeController {
     private final ItemService itemService;
 
     @GetMapping("/")
-    public ResponseEntity<Page<ItemResponse>> index(@RequestParam(value = "page", defaultValue = "0") int page) {
-        Page<ItemResponse> response=itemService.findAll(page);
+    public ResponseEntity<ItemPageResponse> index(@RequestParam(value = "page", defaultValue = "0") int page) {
+        ItemPageResponse response=itemService.findAll(page);
 
         return ResponseEntity.ok(response);
     }

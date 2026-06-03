@@ -5,6 +5,7 @@ import com.example.application.ItemService;
 import com.example.request.NewItemRequest;
 import com.example.request.UpdateItemRequest;
 import com.example.response.ApiResponse;
+import com.example.response.ItemPageResponse;
 import com.example.response.ItemResponse;
 import com.example.util.ItemMapper;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +29,8 @@ public class ItemController {
 
     @GetMapping("/")
     @ResponseBody
-    public ResponseEntity<ApiResponse<Page<ItemResponse>>> items(@RequestParam(value = "page", defaultValue = "0") int page) {
-        Page<ItemResponse> response=itemService.findAll(page);
+    public ResponseEntity<ApiResponse<ItemPageResponse>> items(@RequestParam(value = "page", defaultValue = "0") int page) {
+        ItemPageResponse response=itemService.findAll(page);
 
         return ResponseEntity.ok(ApiResponse.success(response, "도서 목록 조회 성공"));
     }

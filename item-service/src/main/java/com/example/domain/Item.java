@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "item", indexes = {
+        @Index(name = "idx_item_title", columnList = "title")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Item {
